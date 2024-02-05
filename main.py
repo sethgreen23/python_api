@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, status, HTTPException, Response
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
@@ -29,7 +29,7 @@ async def get_posts():
     # serialize automaticaly the list
     return {"data": my_posts}
 
-@app.post("/posts")
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):
     post_dict = post.dict()
     post_dict["id"] = randrange(0, 1000000)
@@ -37,7 +37,13 @@ def create_posts(post: Post):
     return {
             "data": post_dict
             }
+
 @app.get("/posts/{id}")
-def get_post(id: int):
+def get_post(id: int, response: Response):
     post = find_post(id)
+    if not post:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 
+                            f"Post with id {id} is not found")
+        # response.status_code = 400
+        # return {"message": f"Post with id {id} is not found"}
     return {"data":post}

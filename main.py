@@ -10,15 +10,18 @@ class Post(BaseModel):
     rating: Optional[int] = None # optional and default to none
     published: bool = True # optional
 
+my_posts = [{"title": "Favorite food", "content": "I like eating pizza", "id": 1},
+            {"title": "Best beatches in california", "content": "Sans Francisco Beatch", "id": 2}]
 @app.get("/")
 async def root():
     return {"message": "Hello to my api"}
 
 @app.get("/posts")
 async def get_posts():
-    return {"data": "this is my post"}
+    # serialize automaticaly the list
+    return {"data": my_posts}
 
-@app.post("/createposts")
+@app.post("/posts")
 def create_posts(post: Post):
     print(post)
     # change pydantic model to dictionary

@@ -39,7 +39,7 @@ def create_posts(post: Post):
             }
 
 @app.get("/posts/{id}")
-def get_post(id: int, response: Response):
+def get_post(id: int):
     post = find_post(id)
     if not post:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 

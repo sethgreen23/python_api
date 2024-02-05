@@ -63,3 +63,14 @@ def delete_post(id: int):
     my_posts.pop(index)
     # with fastapi you dont send content you just send the status
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.put("/posts/{id}")
+def update_post(id: int, post: Post):
+    index = find_index_post(id)
+    if index == None:
+        HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
+    
+    post_dict = post.dict()
+    post_dict["id"] = id
+    my_posts[index] = post_dict
+    return {"data": post_dict}

@@ -20,6 +20,13 @@ def find_post(id):
             return p
     return None
 
+def find_index_post(id):
+    for i, p in enumerate(my_posts):
+        if p["id"] == id:
+            print(p, i)
+            return i
+    return None
+
 @app.get("/")
 async def root():
     return {"message": "Hello to my api"}
@@ -43,7 +50,16 @@ def get_post(id: int):
     post = find_post(id)
     if not post:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 
-                            f"Post with id {id} is not found")
+                            detail=f"Post with id {id} is not found")
         # response.status_code = 400
         # return {"message": f"Post with id {id} is not found"}
     return {"data":post}
+
+@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int):
+    index = find_index_post(id)
+    if index == None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
+    my_posts.pop(index)
+    # with fastapi you dont send content you just send the status
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

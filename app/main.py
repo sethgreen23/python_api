@@ -53,8 +53,10 @@ async def root():
 
 @app.get("/posts")
 async def get_posts():
+    cur.execute("""SELECT * FROM posts """)
+    posts = cur.fetchall()
     # serialize automaticaly the list
-    return {"data": my_posts}
+    return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_posts(post: Post):

@@ -79,10 +79,11 @@ def get_post(id: int):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int):
-    index = find_index_post(id)
-    if index == None:
+    cur.execute(""" DELETE FROM posts WHERE id=%s """, (str(id),))
+    row_deleted_count = cur.rowcount
+    if row_deleted_count == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
-    my_posts.pop(index)
+    conn.commit()
     # with fastapi you dont send content you just send the status
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

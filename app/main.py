@@ -68,7 +68,8 @@ def create_posts(post: Post):
 
 @app.get("/posts/{id}")
 def get_post(id: int):
-    post = find_post(id)
+    cur.execute(""" SELECT * FROM posts WHERE id=%s """, (id,))
+    post = cur.fetchone()
     if not post:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 
                             detail=f"Post with id {id} is not found")

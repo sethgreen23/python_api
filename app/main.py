@@ -23,7 +23,7 @@ while True:
 	except Exception as error:
 		print("Connection failed!")
 		print("Error: ", error)
-		time.sleep(2)
+		time.sleep(2000)
 
 class Post(BaseModel):
     title: str

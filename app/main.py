@@ -81,7 +81,6 @@ def get_post(id: int, db: Session = Depends(get_db)):
     # cur.execute(""" SELECT * FROM posts WHERE id=%s """, (id,))
     # post = cur.fetchone()
     post = db.query(models.Post).filter_by(id=id).one_or_none()
-    print(post)
     if not post:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 
                             detail=f"Post with id {id} is not found")
@@ -90,23 +89,30 @@ def get_post(id: int, db: Session = Depends(get_db)):
     return {"data":post}
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    cur.execute(""" DELETE FROM posts WHERE id=%s """, (str(id),))
-    row_deleted_count = cur.rowcount
-    if row_deleted_count == 0:
+def delete_post(id: int, db: Session = Depends(get_db)):
+    # cur.execute(""" DELETE FROM posts WHERE id=%s """, (str(id),))
+    # row_deleted_count = cur.rowcount
+    post = db.query(models.Post).filter_by(id=id).first()
+    if post == None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
-    conn.commit()
+    # conn.commit()
+    db.delete(post)
+    db.commit()
     # with fastapi you dont send content you just send the status
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    cur.execute(""" UPDATE posts
-                	SET title = %s, content = %s, published = %s
-                 	WHERE id = %s RETURNING * """,
-                (post.title, post.content, str(post.published), str(id)))
-    updated_post = cur.fetchone()
-    conn.commit()
+def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+    # cur.execute(""" UPDATE posts
+    #             	SET title = %s, content = %s, published = %s
+    #              	WHERE id = %s RETURNING * """,
+    #             (post.title, post.content, str(post.published), str(id)))
+    # updated_post = cur.fetchone()
+    updated_post = db.query(models.Post).get(id)
     if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
+    for key, value in post.dict().items():
+        setattr(updated_post, str(key), value)
+    db.commit()
+    db.refresh(updated_post)
     return {"data": updated_post}

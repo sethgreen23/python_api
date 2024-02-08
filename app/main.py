@@ -33,7 +33,7 @@ while True:
 class Post(BaseModel):
     title: str
     content: str
-    rating: Optional[int] = None # optional and default to none
+    # rating: Optional[int] = None # optional and default to none
     published: bool = True # optional
 
 my_posts = [{"title": "Favorite food", "content": "I like eating pizza", "id": 1},
@@ -65,11 +65,15 @@ async def get_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
-    cur.execute(""" INSERT INTO posts (title, content, published) VALUES(%s, %s, %s) RETURNING *""",
-                (post.title, post.content, post.published))
-    new_post = cur.fetchone()
-    conn.commit()
+def create_posts(post: Post, db: Session = Depends(get_db)):
+    # cur.execute(""" INSERT INTO posts (title, content, published) VALUES(%s, %s, %s) RETURNING *""",
+    #             (post.title, post.content, post.published))
+    # new_post = cur.fetchone()
+    # conn.commit()
+    new_post = models.Post(**post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post}
 
 @app.get("/posts/{id}")

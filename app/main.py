@@ -57,9 +57,10 @@ async def test_sqlalchemy(db: Session = Depends(get_db)):
     return {"message": "Hello to my api"}
 
 @app.get("/posts")
-async def get_posts():
-    cur.execute("""SELECT * FROM posts """)
-    posts = cur.fetchall()
+async def get_posts(db: Session = Depends(get_db)):
+    # cur.execute("""SELECT * FROM posts """)
+    # posts = cur.fetchall()
+    posts = db.query(models.Post).all()
     # serialize automaticaly the list
     return {"data": posts}
 

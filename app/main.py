@@ -115,4 +115,13 @@ def update_post(id: int, post: Post, db: Session = Depends(get_db)):
         setattr(updated_post, str(key), value)
     db.commit()
     db.refresh(updated_post)
+    """"
+    # same logic for delete
+    updated_post = db.query(models.Post).filter_by(id=id)
+    if updated_post.first() == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} is not found")
+    updated_post.update(post.dict(), synchronize_session=False)
+    db.commit()
+    return {"data": update_post.first()}
+    """
     return {"data": updated_post}

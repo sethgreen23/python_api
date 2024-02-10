@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from . import  models, schema
 from .database import get_db, engine
 
@@ -116,3 +117,18 @@ def update_post(id: int, post: schema.UpdatePost, db: Session = Depends(get_db))
     return {"data": update_post.first()}
     """
     return updated_post
+
+
+# user end points
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schema.UserOut)
+def create_user(user: schema.CreateUser, db: Session = Depends(get_db)):
+    new_user = models.User(**user.dict())
+    # test if the email already exists
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except IntegrityError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Post with email {new_user.email} already exist")
+        
+    return new_user

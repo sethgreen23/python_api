@@ -1,12 +1,11 @@
 from fastapi import FastAPI, Body, status, HTTPException, Response, Depends
-from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
-from . import  models
+from . import  models, schema
 from .database import get_db, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -30,11 +29,7 @@ while True:
 		print("Error: ", error)
 		time.sleep(2000)
 
-class Post(BaseModel):
-    title: str
-    content: str
-    # rating: Optional[int] = None # optional and default to none
-    published: bool = True # optional
+
 
 my_posts = [{"title": "Favorite food", "content": "I like eating pizza", "id": 1},
             {"title": "Best beatches in california", "content": "Sans Francisco Beatch", "id": 2}]
@@ -52,20 +47,16 @@ def find_index_post(id):
             return i
     return None
 
-@app.get("/sqlalchemy")
-async def test_sqlalchemy(db: Session = Depends(get_db)):
-    return {"message": "Hello to my api"}
-
-@app.get("/posts")
+@app.get("/posts", response_model=List[schema.Post])
 async def get_posts(db: Session = Depends(get_db)):
     # cur.execute("""SELECT * FROM posts """)
     # posts = cur.fetchall()
     posts = db.query(models.Post).all()
     # serialize automaticaly the list
-    return {"data": posts}
+    return posts
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post, db: Session = Depends(get_db)):
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schema.Post)
+def create_posts(post: schema.CreatePost, db: Session = Depends(get_db)):
     # cur.execute(""" INSERT INTO posts (title, content, published) VALUES(%s, %s, %s) RETURNING *""",
     #             (post.title, post.content, post.published))
     # new_post = cur.fetchone()
@@ -74,9 +65,9 @@ def create_posts(post: Post, db: Session = Depends(get_db)):
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return {"data": new_post}
+    return new_post
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}", response_model=schema.Post)
 def get_post(id: int, db: Session = Depends(get_db)):
     # cur.execute(""" SELECT * FROM posts WHERE id=%s """, (id,))
     # post = cur.fetchone()
@@ -86,7 +77,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
                             detail=f"Post with id {id} is not found")
         # response.status_code = 400
         # return {"message": f"Post with id {id} is not found"}
-    return {"data":post}
+    return post
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db)):
@@ -101,8 +92,8 @@ def delete_post(id: int, db: Session = Depends(get_db)):
     # with fastapi you dont send content you just send the status
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@app.put("/posts/{id}")
-def update_post(id: int, post: Post, db: Session = Depends(get_db)):
+@app.put("/posts/{id}", response_model=schema.Post)
+def update_post(id: int, post: schema.UpdatePost, db: Session = Depends(get_db)):
     # cur.execute(""" UPDATE posts
     #             	SET title = %s, content = %s, published = %s
     #              	WHERE id = %s RETURNING * """,
@@ -124,4 +115,4 @@ def update_post(id: int, post: Post, db: Session = Depends(get_db)):
     db.commit()
     return {"data": update_post.first()}
     """
-    return {"data": updated_post}
+    return updated_post
